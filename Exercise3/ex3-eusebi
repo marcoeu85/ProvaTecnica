@@ -1,0 +1,1 @@
+30 2 * * 0 rsync -avzhe "ssh -i user-key-pair.pem" /home/user/folder/ user@192.168.1.100:/home/user/remotefolder
