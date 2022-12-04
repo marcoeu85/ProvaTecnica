@@ -1,0 +1,536 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Auto Scaling Group - Launch Template | Elastic Load Balancer - Listener - Target Group",
+	"Parameters": {
+		"Cliente": {
+			"Description": "Customer name",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/cliente/name"
+		},
+		"CostCategory": {
+			"Description": "Cost category",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/cost/category"
+		},
+		"EnvironmentName": {
+			"Description": "The name of the env for resources conventional name",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/env/name"
+		},
+		"EC2AppKeyPairName": {
+			"Description": "Key Pair Name for ASG",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/ec2/app/keypair/name"
+		},
+		"ACMCertificateArn": {
+			"Description": "ACM ARN",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/acm/cer/arn"
+		},
+		"EC2AppType": {
+			"Description": "EC2 type for ASG",
+			"Type": "String",
+			"Default": "c5a.large"
+		},
+		"EC2AppAmiName": {
+			"Description": "AMI launch template for ASG - installata come prerequisito, vedi assumption",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/ec2/app/ami/name"
+		}, 
+		"EC2AppIAMRole": {
+			"Description": "Instance IAM Role launch template for ASG",
+			"Type": "String",
+			"Default": "arn:aws:iam::535059900059:instance-profile/role-ssm-cw-PROD"
+		},		
+		"CapacityDesired": {
+			"Description": "Desidered capacity for ASG",
+			"Type": "String",
+			"Default": 1
+		},
+		"CapacityMin": {
+			"Description": "Min capacity for ASG",
+			"Type": "String",
+			"Default": 1
+		},
+		"CapacityMax": {
+			"Description": "Max capacity for ASG",
+			"Type": "String",
+			"Default": 1
+		}
+	},
+	"Resources": {
+		"AutoScalingGroup": {
+			"Type": "AWS::AutoScaling::AutoScalingGroup",
+			"Properties": {
+				"AutoScalingGroupName": "ASG-CLARANET",
+				"VPCZoneIdentifier": [
+					{
+						"Fn::ImportValue": "NetworkMain-PrivateSubnetAppA"
+					},
+					{
+						"Fn::ImportValue": "NetworkMain-PrivateSubnetAppB"
+					}
+				],
+				"AvailabilityZones": [
+					"eu-south-1a",
+					"eu-south-1b"
+				],
+				"LaunchTemplate": {
+					"LaunchTemplateId": {
+						"Ref": "LaunchTemplate"
+					},
+					"Version": {
+						"Fn::GetAtt": [
+							"LaunchTemplate",
+							"LatestVersionNumber"
+						]
+					}
+				},
+				"TargetGroupARNs": [
+					{
+						"Ref": "ALBTargetGroup"
+					}
+				],
+				"DesiredCapacity": {
+					"Ref": "CapacityDesired"
+				},
+				"MinSize": {
+					"Ref": "CapacityMin"
+				},
+				"MaxSize": {
+					"Ref": "CapacityMax"
+				},
+				"Cooldown": 300,
+				"HealthCheckType": "EC2",
+				"HealthCheckGracePeriod": 300,
+				"LifecycleHookSpecificationList": [
+					{
+						"DefaultResult": "CONTINUE",
+						"HeartbeatTimeout": 600,
+						"LifecycleHookName": "LifeCycleHookPROD",
+						"LifecycleTransition": "autoscaling:EC2_INSTANCE_LAUNCHING"
+					}
+				],
+				"MetricsCollection": [
+					{
+						"Granularity": "1Minute",
+						"Metrics": [
+							"GroupMinSize",
+							"GroupMaxSize",
+							"GroupTotalInstances",
+							"GroupStandbyInstances",
+							"GroupInServiceInstances"
+						]
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "ASG-CLARANET",
+						"PropagateAtLaunch": "false"
+					},
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						},
+						"PropagateAtLaunch": "true"
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						},
+						"PropagateAtLaunch": "true"
+					}
+				]
+			}
+		},
+		"LaunchTemplate": {
+			"Type": "AWS::EC2::LaunchTemplate",
+			"Properties": {
+				"LaunchTemplateName": "LT-CLARANET",
+				"LaunchTemplateData": {
+					"ImageId": {
+						"Ref": "EC2AppAmiName"
+					},
+					"InstanceType": {
+						"Ref": "EC2AppType"
+					},
+					"KeyName": {
+						"Ref": "EC2AppKeyPairName"
+					},
+					"IamInstanceProfile": {
+						"Arn": {
+							"Ref": "EC2AppIAMRole"
+						}
+					},
+					"Monitoring": {
+						"Enabled": true
+					},
+					"SecurityGroupIds": [
+						{
+							"Fn::ImportValue": "SecurityGroups-SGEC2App"
+						}
+					],
+					"TagSpecifications": [
+						{
+							"ResourceType": "instance",
+							"Tags": [
+								{
+									"Key": "Cliente",
+									"Value": {
+										"Ref": "Cliente"
+									}
+								},
+								{
+									"Key": "CostCategory",
+									"Value": {
+										"Ref": "CostCategory"
+									}
+								},
+								{
+									"Key": "BackupGroup",
+									"Value": "EC2-APP"
+								},
+								{
+									"Key": "Name",
+									"Value": "CLARANET"
+								}
+							]
+						},
+						{
+							"ResourceType": "volume",
+							"Tags": [
+								{
+									"Key": "Cliente",
+									"Value": {
+										"Ref": "Cliente"
+									}
+								},
+								{
+									"Key": "CostCategory",
+									"Value": {
+										"Ref": "CostCategory"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"ElasticLoadBalancer": {
+			"Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+			"Properties": {
+				"Type": "application",
+				"Name": "ALB-APPLICATION",
+				"Scheme": "internet-facing",
+				"IpAddressType": "ipv4",
+				"SecurityGroups": [
+					{
+						"Fn::ImportValue": "SecurityGroups-SGBalancerApp"
+					}
+				],
+				"SubnetMappings": [
+					{
+						"SubnetId": {
+							"Fn::ImportValue": "NetworkMain-PublicSubnetA"
+						}
+					},
+					{
+						"SubnetId": {
+							"Fn::ImportValue": "NetworkMain-PublicSubnetB"
+						}
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "ALB-APPLICATION"
+					},
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					}
+				]
+			}
+		},
+		"HTTPSListener": {
+			"Type": "AWS::ElasticLoadBalancingV2::Listener",
+			"Properties": {
+				"Certificates": [
+					{
+						"CertificateArn": {
+							"Ref": "ACMCertificateArn"
+						}
+					}
+				],
+				"LoadBalancerArn": {
+					"Ref": "ElasticLoadBalancer"
+				},
+				"Port": 443,
+				"Protocol": "HTTPS",
+				"DefaultActions": [
+					{
+						"Type": "forward",
+						"Order": 1,
+						"TargetGroupArn": {
+							"Ref": "ALBTargetGroup"
+						}
+					}
+				]
+			}
+		},
+		"ListenerRule1": {
+			"Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+			"Properties": {
+				"ListenerArn": {
+					"Ref": "HTTPSListener"
+				},
+				"Priority": 1,
+				"Actions": [
+					{
+						"Type": "redirect",
+						"RedirectConfig": {
+							"Host": "#{host}",
+							"Path": "/#{path}/",
+							"Query": "#{query}",
+							"StatusCode": "HTTP_301"
+						}
+					}
+				],
+				"Conditions": [
+					{
+						"Field": "path-pattern",
+						"Values": [
+							"/TestServiziCLARANET"
+						]
+					}
+				]
+			}
+		},
+		"ListenerRule2": {
+			"Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
+			"Properties": {
+				"ListenerArn": {
+					"Ref": "HTTPSListener"
+				},
+				"Priority": 2,
+				"Actions": [
+					{
+						"Type": "forward",
+						"TargetGroupArn": {
+							"Ref": "ALBConsoleTargetGroup"
+						}
+					}
+				],
+				"Conditions": [
+					{
+						"Field": "path-pattern",
+						"Values": [
+							"/console*",
+							"/management*",
+							"/keycloak/*"
+						]
+					}
+				]
+			}
+		},
+		"ALBTargetGroup": {
+			"Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+			"Properties": {
+				"Name": "TG-CLARANET",
+				"VpcId": {
+					"Fn::ImportValue": "NetworkMain-VPC"
+				},
+				"HealthCheckEnabled": true,
+				"HealthyThresholdCount": 5,
+				"UnhealthyThresholdCount": 2,
+				"HealthCheckTimeoutSeconds": 5,
+				"HealthCheckIntervalSeconds": 30,
+				"Matcher": {
+					"HttpCode": 200
+				},
+				"IpAddressType": "ipv4",
+				"Port": 8080,
+				"Protocol": "HTTP",
+				"ProtocolVersion": "HTTP1",
+				"TargetType": "instance",
+				"TargetGroupAttributes": [
+					{
+						"Key": "deregistration_delay.timeout_seconds",
+						"Value": 300
+					},
+					{
+						"Key": "stickiness.enabled",
+						"Value": false
+					},
+					{
+						"Key": "slow_start.duration_seconds",
+						"Value": 0
+					},
+					{
+						"Key": "load_balancing.algorithm.type",
+						"Value": "round_robin"
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "TG-CLARANET"
+					},
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					}
+				]
+			}
+		},
+		"ALBConsoleTargetGroup": {
+			"Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+			"Properties": {
+				"Name": "TG-CLARANET-CONSOLE",
+				"VpcId": {
+					"Fn::ImportValue": "NetworkMain-VPC"
+				},
+				"HealthCheckEnabled": true,
+				"HealthyThresholdCount": 5,
+				"UnhealthyThresholdCount": 2,
+				"HealthCheckTimeoutSeconds": 5,
+				"HealthCheckIntervalSeconds": 30,
+				"Matcher": {
+					"HttpCode": 200
+				},
+				"IpAddressType": "ipv4",
+				"Port": 8080,
+				"Protocol": "HTTP",
+				"ProtocolVersion": "HTTP1",
+				"TargetType": "instance",
+				"TargetGroupAttributes": [
+					{
+						"Key": "deregistration_delay.timeout_seconds",
+						"Value": 300
+					},
+					{
+						"Key": "stickiness.enabled",
+						"Value": false
+					},
+					{
+						"Key": "slow_start.duration_seconds",
+						"Value": 0
+					},
+					{
+						"Key": "load_balancing.algorithm.type",
+						"Value": "round_robin"
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": "TG-CLARANET-CONSOLE"
+					},
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					}
+				]
+			}
+		}
+	},
+	"Outputs": {
+		"AutoScalingGroup": {
+			"Description": "ASG of public subnet A",
+			"Value": {
+				"Ref": "AutoScalingGroup"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-AutoScalingGroup"
+				}
+			}
+		},
+		"ApplicationLoadBalancerARN": {
+			"Description": "ALB ARN",
+			"Value": {
+				"Ref": "ElasticLoadBalancer"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-ApplicationLoadBalancer"
+				}
+			}
+		},
+		"ApplicationLoadBalancerDNS": {
+			"Description": "ALB DNS",
+			"Value": {
+				"Fn::GetAtt": [
+					"ElasticLoadBalancer",
+					"DNSName"
+				]
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-ApplicationLoadBalancer-DNS"
+				}
+			}
+		},
+		"ListenerLoadBalancer": {
+			"Description": "Listener",
+			"Value": {
+				"Ref": "HTTPSListener"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-ListenerLoadBalancer"
+				}
+			}
+		},
+		"TargetGroup1LoadBalancer": {
+			"Description": "Target Group 1 (main)",
+			"Value": {
+				"Ref": "ALBTargetGroup"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-TargetGroup1LoadBalancer"
+				}
+			}
+		},
+		"TargetGroup2LoadBalancer": {
+			"Description": "Target Group 2 (console)",
+			"Value": {
+				"Ref": "ALBConsoleTargetGroup"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-TargetGroup2LoadBalancer"
+				}
+			}
+		}
+	}
+}

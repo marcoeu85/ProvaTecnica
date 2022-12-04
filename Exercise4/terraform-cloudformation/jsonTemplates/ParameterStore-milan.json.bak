@@ -1,0 +1,258 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Parameter Store list - eu-south-1",
+  "Resources": {
+    "ClienteName": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/cliente/name",
+        "Description": "Customer name parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "Claranet",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "CostCategory": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/cost/category",
+        "Description": "Cost category parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "Infrastruttura",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "EnvName": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/env/name",
+        "Description": "Environment name parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "PROD",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "EnvRegionCodeApplication": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/env/region/code",
+        "Description": "Environment region code parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "eu-south-1",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "VPCCIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/cidr",
+        "Description": "VPC CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.0.0/16",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "PrivateSubnetAppACIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/privateappa/cidr",
+        "Description": "Private Subnet A - WordPress CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.10.0/24",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "PrivateSubnetAppBCIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/privateappb/cidr",
+        "Description": "Private Subnet B - Wordpress CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.11.0/24",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "PrivateSubnetDbACIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/privatedba/cidr",
+        "Description": "Private Subnet A - RDS MySQL DB CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.20.0/24",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "PrivateSubnetDbBCIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/privatedbb/cidr",
+        "Description": "Private Subnet B - RDS MySQL DB CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.21.0/24",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "PublicSubnetACIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/publica/cidr",
+        "Description": "Private Subnet A - CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.0.0/24",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "PublicSubnetBCIDR": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/vpc/publicb/cidr",
+        "Description": "Private Subnet B - CIDR parameter",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "10.31.1.0/24",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "EC2AppKeyPairId": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/ec2/app/keypair/id",
+        "Description": "EC2 key pair",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "key-0cbb1c34b4eb87387",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "EC2AppKeyPairName": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/ec2/app/keypair/name",
+        "Description": "EC2 key pair",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "ec2-app-keypair",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "EC2AppAmiName": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/ec2/app/ami/name",
+        "Description": "EC2 key pair",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "ec2-image-assumption-wordpress",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "ACMCertificateArn": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/acm/cer/arn",
+        "Description": "ACM Cer ARN",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "arn:aws:acm:eu-south-1:535059900059:certificate/1019d394-7fa9-4643-b641-616c5c0cdcc0",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "ACMCertificateId": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/acm/cer/id",
+        "Description": "ACM Cer ID",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "1019d394-7fa9-4643-b641-616c5c0cdcc0",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "KMSKeyEBSArn": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/kms/ebs/arn",
+        "Description": "KMS Key EBS ARN",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "arn:aws:kms:eu-south-1:535059900059:key/40a78f35-1b7a-4271-906b-fad7470d099e",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    },
+    "KMSKeyEBSId": {
+      "Type": "AWS::SSM::Parameter",
+      "Properties": {
+        "Name": "/kms/ebs/id",
+        "Description": "KMS Key EBS ID",
+        "Tier": "Standard",
+        "Type": "String",
+        "Value": "40a78f35-1b7a-4271-906b-fad7470d099e",
+        "Tags": {
+          "Cliente": "Claranet",
+          "CostCategory": "Infrastruttura"
+        }
+      }
+    }
+  }
+}

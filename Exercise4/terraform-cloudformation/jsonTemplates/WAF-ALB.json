@@ -1,0 +1,172 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "WAF - ALB",
+	"Parameters": {
+		"Cliente": {
+			"Description": "Customer name",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/cliente/name"
+		},
+		"CostCategory": {
+			"Description": "Cost category",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/cost/category"
+		}
+	},
+	"Resources": {
+		"IPSetEusebiLB": {
+			"Type": "AWS::WAFv2::IPSet",
+			"Properties": {
+				"Name": "EUSEBI-WL-EUSEBI",
+				"Scope": "REGIONAL",
+				"IPAddressVersion": "IPV4",
+				"Addresses": [
+					"77.238.14.100/32",
+					"130.0.145.192/30"
+				],
+				"Tags": [
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					}
+				]
+			}
+		},
+		"IPSetCLARANETLB": {
+			"Type": "AWS::WAFv2::IPSet",
+			"Properties": {
+				"Name": "CLARANET-WL-CLARANET",
+				"Scope": "REGIONAL",
+				"IPAddressVersion": "IPV4",
+				"Addresses": [
+					"1.1.1.1/32"
+				],
+				"Tags": [
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					}
+				]
+			}
+		},
+		"WebACLLB": {
+			"Type": "AWS::WAFv2::WebACL",
+			"Properties": {
+				"Name": "CLARANET-LB-ACL",
+				"Scope": "REGIONAL",
+				"Description": "Web ACL for Application Load Balancer",
+				"DefaultAction": {
+					"Allow": {}
+				},
+				"VisibilityConfig": {
+					"CloudWatchMetricsEnabled": true,
+					"SampledRequestsEnabled": true,
+					"MetricName": "BalancerWebACLMetric"
+				},
+				"Rules": [
+					{
+						"Name": "CLARANET-VALIDATOR-LB-EUSEBI",
+						"Action": {
+							"Allow": {}
+						},
+						"Priority": 0,
+						"Statement": {
+							"IPSetReferenceStatement": {
+								"Arn": {
+									"Fn::GetAtt": [
+										"IPSetEusebiLB",
+										"Arn"
+									]
+								}
+							}
+						},
+						"VisibilityConfig": {
+							"CloudWatchMetricsEnabled": true,
+							"SampledRequestsEnabled": true,
+							"MetricName": "EusebiRuleMetric"
+						}
+					},
+					{
+						"Name": "CLARANET-VALIDATOR-LB-CLARANET",
+						"Action": {
+							"Allow": {}
+						},
+						"Priority": 2,
+						"Statement": {
+							"IPSetReferenceStatement": {
+								"Arn": {
+									"Fn::GetAtt": [
+										"IPSetCLARANETLB",
+										"Arn"
+									]
+								}
+							}
+						},
+						"VisibilityConfig": {
+							"CloudWatchMetricsEnabled": true,
+							"SampledRequestsEnabled": true,
+							"MetricName": "CLARANETRuleMetric"
+						}
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					}
+				]
+			}
+		}
+	},
+	"Outputs": {
+		"WebACLLB": {
+			"Description": "Web ACL for ALB",
+			"Value": {
+				"Ref": "WebACLLB"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-WebACLLB"
+				}
+			}
+		},
+		"WebACLLBArn": {
+			"Description": "Web ACL for ALB - ARN",
+			"Value": {
+				"Fn::GetAtt": [
+					"WebACLLB",
+					"Arn"
+				]
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-WebACLLB-ARN"
+				}
+			}
+		}
+	}
+}

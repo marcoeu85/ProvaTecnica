@@ -1,0 +1,481 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "NAT Gateways - routes",
+    "Parameters": {
+        "EnvironmentName": {
+            "Description": "The name of the env for resources conventional name",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/env/name"
+        },
+        "RegionCode": {
+            "Description": "VPC Region",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/env/region/code"
+        },
+        "Cliente": {
+            "Description": "Customer name",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/cliente/name"
+        },
+        "CostCategory": {
+            "Description": "Cost category",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/cost/category"
+        },
+        "VPCCIDR": {
+            "Description": "VPC CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/cidr"
+        },
+        "PrivateAppACIDR": {
+            "Description": "PrivateAppA CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/privateappa/cidr"
+        },
+        "PrivateAppBCIDR": {
+            "Description": "PrivateAppB CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/privateappb/cidr"
+        },
+        "PrivateDbACIDR": {
+            "Description": "PrivateDbA CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/privatedba/cidr"
+        },
+        "PrivateDbBCIDR": {
+            "Description": "PrivateDbB CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/privatedbb/cidr"
+        },
+        "PublicACIDR": {
+            "Description": "PublicA CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/publica/cidr"
+        },
+        "PublicBCIDR": {
+            "Description": "PublicB CIDR",
+            "Type": "AWS::SSM::Parameter::Value<String>",
+            "Default": "/vpc/publicb/cidr"
+        }
+    },
+    "Resources": {
+        "NATGatewayA": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::ImportValue": "NetworkMain-ElasticIPA"
+                },
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PublicSubnetA"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "nat-A"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "NATGatewayB": {
+            "Type": "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId": {
+                    "Fn::ImportValue": "NetworkMain-ElasticIPB"
+                },
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PublicSubnetB"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "nat-B"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "PublicRouteTable": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Fn::ImportValue": "NetworkMain-VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Application",
+                        "Value": {
+                            "Ref": "AWS::StackName"
+                        }
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    },
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "public-route-table"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "PublicRoute": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Fn::ImportValue": "NetworkMain-InternetGateway"
+                }
+            }
+        },
+        "PublicSubnetRouteTableAssociationA": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PublicSubnetA"
+                },
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        },
+        "PublicSubnetRouteTableAssociationB": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PublicSubnetB"
+                },
+                "RouteTableId": {
+                    "Ref": "PublicRouteTable"
+                }
+            }
+        },
+        "PrivateRouteTableAppA": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Fn::ImportValue": "NetworkMain-VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "private-route-table-app-A"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "PrivateRouteTableAppB": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Fn::ImportValue": "NetworkMain-VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "private-route-table-app-B"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "PrivateRouteTableDbA": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Fn::ImportValue": "NetworkMain-VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "private-route-table-db-A"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "PrivateRouteTableDbB": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Fn::ImportValue": "NetworkMain-VPC"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "-",
+                                [
+                                    {
+                                        "Ref": "EnvironmentName"
+                                    },
+                                    "private-route-table-db-B"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Cliente",
+                        "Value": {
+                            "Ref": "Cliente"
+                        }
+                    },
+                    {
+                        "Key": "CostCategory",
+                        "Value": {
+                            "Ref": "CostCategory"
+                        }
+                    }
+                ]
+            }
+        },
+        "PrivateRouteToInternetAppA": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableAppA"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "NATGatewayA"
+                }
+            }
+        },
+        "PrivateRouteToInternetDbA": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableDbA"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "NATGatewayA"
+                }
+            }
+        },
+        "PrivateRouteToInternetAppB": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableAppB"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "NATGatewayB"
+                }
+            }
+        },
+        "PrivateRouteToInternetDbB": {
+            "Type": "AWS::EC2::Route",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableDbB"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "NatGatewayId": {
+                    "Ref": "NATGatewayB"
+                }
+            }
+        },
+        "PrivateSubnetRouteTableAssociationAppA": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PrivateSubnetAppA"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableAppA"
+                }
+            }
+        },
+        "PrivateSubnetRouteTableAssociationAppB": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PrivateSubnetAppB"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableAppB"
+                }
+            }
+        },
+        "PrivateSubnetRouteTableAssociationDbA": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PrivateSubnetDbA"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableDbA"
+                }
+            }
+        },
+        "PrivateSubnetRouteTableAssociationDbB": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::ImportValue": "NetworkMain-PrivateSubnetDbB"
+                },
+                "RouteTableId": {
+                    "Ref": "PrivateRouteTableDbB"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "NATGatewayA": {
+            "Description": "NATGateway AZ a",
+            "Value": {
+                "Ref": "NATGatewayA"
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-NATGatewayA"
+                }
+            }
+        },
+        "NATGatewayB": {
+            "Description": "NATGateway AZ b",
+            "Value": {
+                "Ref": "NATGatewayB"
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-NATGatewayB"
+                }
+            }
+        }
+    }
+}

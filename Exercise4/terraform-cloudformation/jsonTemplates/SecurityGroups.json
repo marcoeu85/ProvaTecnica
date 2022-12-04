@@ -1,0 +1,247 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Security Groups of the CLARANET projects",
+	"Parameters": {
+		"Cliente": {
+			"Description": "Customer name",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/cliente/name"
+		},
+		"CostCategory": {
+			"Description": "Cost category",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/cost/category"
+		},
+		"EnvironmentName": {
+			"Description": "The name of the env for resources conventional name",
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Default": "/env/name"
+		}
+	},
+	"Resources": {
+		"LoadBalancerApp": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription": "Security Group for Application Load Balancer",
+				"GroupName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Fn::Join": [
+									"-",
+									[
+										{
+											"Ref": "Cliente"
+										},
+										{
+											"Ref": "EnvironmentName"
+										}
+									]
+								]
+							},
+							"balancer"
+						]
+					]
+				},
+				"VpcId": {
+					"Fn::ImportValue": "NetworkMain-VPC"
+				},
+				"SecurityGroupIngress": [
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 80,
+						"ToPort": 80,
+						"CidrIp": "0.0.0.0/0"
+					},
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 443,
+						"ToPort": 443,
+						"CidrIp": "0.0.0.0/0"
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					},
+					{
+						"Key": "Name",
+						"Value": {
+							"Fn::Sub": [
+								"sg-${labelForSG}",
+								{
+									"labelForSG": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Fn::Join": [
+														"-",
+														[
+															{
+																"Ref": "Cliente"
+															},
+															{
+																"Ref": "EnvironmentName"
+															}
+														]
+													]
+												},
+												"balancer"
+											]
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"EC2App": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupDescription": "Security Group for EC2 Application",
+				"GroupName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Fn::Join": [
+									"-",
+									[
+										{
+											"Ref": "Cliente"
+										},
+										{
+											"Ref": "EnvironmentName"
+										}
+									]
+								]
+							},
+							"CLARANET"
+						]
+					]
+				},
+				"VpcId": {
+					"Fn::ImportValue": "NetworkMain-VPC"
+				},
+				"SecurityGroupIngress": [
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 80,
+						"ToPort": 80,
+						"SourceSecurityGroupId": {
+							"Fn::GetAtt": [
+								"LoadBalancerApp",
+								"GroupId"
+							]
+						}
+					},
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 8080,
+						"ToPort": 8080,
+						"SourceSecurityGroupId": {
+							"Fn::GetAtt": [
+								"LoadBalancerApp",
+								"GroupId"
+							]
+						}
+					},
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 443,
+						"ToPort": 443,
+						"CidrIp": "10.31.0.0/16"
+					},
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 22,
+						"ToPort": 22,
+						"CidrIp": "10.31.0.0/16"
+					}
+				],
+				"Tags": [
+					{
+						"Key": "Cliente",
+						"Value": {
+							"Ref": "Cliente"
+						}
+					},
+					{
+						"Key": "CostCategory",
+						"Value": {
+							"Ref": "CostCategory"
+						}
+					},
+					{
+						"Key": "Name",
+						"Value": {
+							"Fn::Sub": [
+								"sg-${labelForSG}",
+								{
+									"labelForSG": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Fn::Join": [
+														"-",
+														[
+															{
+																"Ref": "Cliente"
+															},
+															{
+																"Ref": "EnvironmentName"
+															}
+														]
+													]
+												},
+												"CLARANET"
+											]
+										]
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		}
+	},
+	"Outputs": {
+		"SGEC2App": {
+			"Description": "Security group for EC2 Application",
+			"Value": {
+				"Ref": "EC2App"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-SGEC2App"
+				}
+			}
+		},
+		"SGBalancerApp": {
+			"Description": "Security group for Balancer",
+			"Value": {
+				"Ref": "LoadBalancerApp"
+			},
+			"Export": {
+				"Name": {
+					"Fn::Sub": "${AWS::StackName}-SGBalancerApp"
+				}
+			}
+		}
+	}
+}
